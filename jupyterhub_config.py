@@ -10,6 +10,9 @@ c = get_config()
 # avoid having to rebuild the JupyterHub container every time we change a
 # configuration parameter.
 
+# Start a Jupyter*lab* instead of a notebook. Added by Nate
+c.Spawner.default_url = '/lab'
+
 # Spawn single-user servers as Docker containers
 c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
 # Spawn containers from this image
