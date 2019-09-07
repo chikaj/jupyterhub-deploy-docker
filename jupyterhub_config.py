@@ -10,11 +10,15 @@ c = get_config()
 # avoid having to rebuild the JupyterHub container every time we change a
 # configuration parameter.
 
-# Start a Jupyter*lab* instead of a notebook. Added by Nate
-c.Spawner.default_url = '/lab'
 
 # Spawn single-user servers as Docker containers
-c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
+# c.JupyterHub.spawner_class = 'dockerspawner.DockerSpawner'
+c.JupyterHub.spawner_class = 'DockerImageChooserSpawner'
+c.DockerImageChooserSpawner.dockerimages = [
+    'txgisci/rse-instructor',
+    'txgisci/rse-student'
+]
+
 # Spawn containers from this image
 c.DockerSpawner.container_image = os.environ['DOCKER_NOTEBOOK_IMAGE']
 # JupyterHub requires a single-user instance of the Notebook server, so we
@@ -22,7 +26,7 @@ c.DockerSpawner.container_image = os.environ['DOCKER_NOTEBOOK_IMAGE']
 # jupyter/docker-stacks *-notebook images as the Docker run command when
 # spawning containers.  Optionally, you can override the Docker run command
 # using the DOCKER_SPAWN_CMD environment variable.
-spawn_cmd = os.environ.get('DOCKER_SPAWN_CMD', "start-singleuser.sh")
+spawn_cmd = os.environ.get('DOCKER_SPAWN_CMD', "start-singleuser.sh") # --SingleUserNotebookApp.default url=/lab
 c.DockerSpawner.extra_create_kwargs.update({ 'command': spawn_cmd })
 # Connect containers to this Docker network
 network_name = os.environ['DOCKER_NETWORK_NAME']
@@ -87,3 +91,43 @@ with open(os.path.join(pwd, 'userlist')) as f:
             whitelist.add(name)
             if len(parts) > 1 and parts[1] == 'admin':
                 admin.add(name)
+
+# chikaj has access to different shared servers
+c.JupyterHub.load_groups = {
+    'formgrade-rse': [
+        'chikaj',
+    ],
+    'formgrade-introduction': [
+        'chikaj',
+    ],
+    'nbgrader-rse': [],
+    'nbgrader-introduction': []
+}
+
+# Start teh notebook server as a service.
+c.JupyterHub.services = [
+    {
+        'name': 'rse',
+        'url': 'http://127.0.0.1:9999',
+        'command': [
+            'jupyterhub-singleuser',
+            '--group=formgrade-rse',
+            '--debug',
+        ],
+        'user': 'chikaj',
+        'cwd': '/home/chikaj',
+        'api_token': '52199321f17842988eecdd3dc0720a0e'
+    },
+    {
+        'name': 'introduction',
+        'url': 'http://127.0.0.1:9998',
+        'command': [
+            'jupyterhub-singleuser',
+            '--group=formgrade-introduction',
+            '--debug',
+        ],
+        'user': 'chikaj',
+        'cwd': '/home/chikaj',
+        'api_token': '52199321f17842988eecdd3dc0720a0e'
+    },
+]
